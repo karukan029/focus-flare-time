@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx wrangler pages project create:*)",
+      "Bash(npx wrangler init:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx wrangler:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}
