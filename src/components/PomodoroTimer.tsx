@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Coffee, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Coffee, Zap, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +12,7 @@ const PomodoroTimer = () => {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
@@ -22,6 +22,30 @@ const PomodoroTimer = () => {
   
   const currentDuration = mode === 'work' ? workDuration : breakDuration;
   const progress = ((currentDuration - timeLeft) / currentDuration) * 100;
+
+  // 通知許可を確認・要求
+  useEffect(() => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        setNotificationsEnabled(true);
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+          setNotificationsEnabled(permission === 'granted');
+        });
+      }
+    }
+  }, []);
+
+  // デスクトップ通知を表示する関数
+  const showNotification = (title: string, body: string) => {
+    if (notificationsEnabled && 'Notification' in window) {
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+      });
+    }
+  };
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -50,17 +74,31 @@ const PomodoroTimer = () => {
       setCompletedPomodoros(prev => prev + 1);
       setMode('break');
       setTimeLeft(breakDuration);
+      
+      // トーストとデスクトップ通知
       toast({
         title: "作業時間完了！",
         description: "お疲れ様でした。5分間の休憩を取りましょう。",
       });
+      
+      showNotification(
+        "ポモドーロタイマー - 作業時間完了！",
+        "お疲れ様でした。5分間の休憩を取りましょう。"
+      );
     } else {
       setMode('work');
       setTimeLeft(workDuration);
+      
+      // トーストとデスクトップ通知
       toast({
         title: "休憩時間完了！",
         description: "次のポモドーロを始めましょう。",
       });
+      
+      showNotification(
+        "ポモドーロタイマー - 休憩時間完了！",
+        "次のポモドーロを始めましょう。"
+      );
     }
 
     // Play notification sound (if available)
@@ -71,6 +109,21 @@ const PomodoroTimer = () => {
       });
     } catch (error) {
       // Ignore audio errors
+    }
+  };
+
+  // 通知許可を要求する関数
+  const requestNotificationPermission = () => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission().then((permission) => {
+        setNotificationsEnabled(permission === 'granted');
+        if (permission === 'granted') {
+          toast({
+            title: "通知が有効になりました",
+            description: "タイマー終了時にデスクトップ通知が表示されます。",
+          });
+        }
+      });
     }
   };
 
@@ -105,6 +158,19 @@ const PomodoroTimer = () => {
             <p className="text-muted-foreground">
               集中して作業し、適度に休憩を取りましょう
             </p>
+            
+            {/* 通知設定 */}
+            {!notificationsEnabled && 'Notification' in window && (
+              <Button
+                onClick={requestNotificationPermission}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Bell className="w-4 h-4" />
+                通知を有効にする
+              </Button>
+            )}
           </div>
 
           {/* Mode Selector */}
