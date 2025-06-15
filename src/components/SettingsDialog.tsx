@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { Settings, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,48 +12,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSettings } from '@/hooks/useSettings';
-import { useToast } from '@/hooks/use-toast';
+import { useSettingsDialog } from '@/hooks/useSettingsDialog';
 
 const SettingsDialog = () => {
-  const { dailyTarget, updateDailyTarget } = useSettings();
-  const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const { state, handlers } = useSettingsDialog();
+  const { handleSave, handleOpenChange, handleTargetChange, handleClose } = handlers;
 
-  // dailyTargetが変更されたときにtempTargetも更新
-  useEffect(() => {
-    setTempTarget(dailyTarget.toString());
-  }, [dailyTarget]);
-
-  const handleSave = () => {
-    const target = parseInt(tempTarget, 10);
-    if (isNaN(target) || target < 1 || target > 20) {
-      toast({
-        title: "エラー",
-        description: "目標は1〜20の範囲で設定してください",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updateDailyTarget(target);
-    setOpen(false);
-    toast({
-      title: "設定を保存しました",
-      description: `1日の目標を${target}ポモドーロに設定しました`,
-    });
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      setTempTarget(dailyTarget.toString());
-    }
-    setOpen(newOpen);
-  };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={state.open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings className="w-4 h-4" />
@@ -79,20 +45,24 @@ const SettingsDialog = () => {
               type="number"
               min="1"
               max="20"
-              value={tempTarget}
-              onChange={(e) => setTempTarget(e.target.value)}
+              value={state.tempTarget}
+              onChange={(e) => handleTargetChange(e.target.value)}
               placeholder="8"
+              className={!state.isValid ? 'border-red-500' : ''}
             />
+            {state.error && (
+              <p className="text-sm text-red-500">{state.error}</p>
+            )}
             <p className="text-sm text-muted-foreground">
               推奨: 6〜10ポモドーロ（3〜5時間の集中作業）
             </p>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={handleClose}>
             キャンセル
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} disabled={!state.isValid}>
             保存
           </Button>
         </DialogFooter>
