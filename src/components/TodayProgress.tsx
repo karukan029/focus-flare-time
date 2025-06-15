@@ -3,14 +3,16 @@ import { Calendar, Clock, Target } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { usePomodoroHistory } from '@/hooks/usePomodoroHistory';
+import { useSettings } from '@/hooks/useSettings';
+import SettingsDialog from './SettingsDialog';
 
 const TodayProgress = () => {
   const { todaySession } = usePomodoroHistory();
+  const { dailyTarget } = useSettings();
 
-  const todayTarget = 8; // 1日の目標ポモドーロ数
   const completedCount = todaySession?.completed_count || 0;
   const totalMinutes = todaySession?.total_work_minutes || 0;
-  const progressPercentage = Math.min((completedCount / todayTarget) * 100, 100);
+  const progressPercentage = Math.min((completedCount / dailyTarget) * 100, 100);
 
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -23,17 +25,20 @@ const TodayProgress = () => {
 
   return (
     <Card className="p-6 mb-6">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Calendar className="w-5 h-5" />
-        今日の進捗
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          今日の進捗
+        </h2>
+        <SettingsDialog />
+      </div>
       
       <div className="space-y-4">
         {/* プログレスバー */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>目標まで</span>
-            <span>{completedCount}/{todayTarget} ポモドーロ</span>
+            <span>{completedCount}/{dailyTarget} ポモドーロ</span>
           </div>
           <Progress value={progressPercentage} className="h-3" />
         </div>
@@ -58,7 +63,7 @@ const TodayProgress = () => {
           
           <div>
             <div className="text-2xl font-bold text-primary">
-              {todayTarget - completedCount > 0 ? todayTarget - completedCount : 0}
+              {dailyTarget - completedCount > 0 ? dailyTarget - completedCount : 0}
             </div>
             <div className="text-xs text-muted-foreground">残り</div>
           </div>
