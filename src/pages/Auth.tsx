@@ -26,13 +26,14 @@ const Auth = () => {
     try {
       setLoading(true);
       await signInWithGoogle();
+      // Note: リダイレクトが発生するため、ここでローディングを解除する必要はありません
     } catch (error: any) {
+      console.error('Google認証エラー:', error);
       toast({
         title: "エラー",
-        description: error.message || "Google認証に失敗しました",
+        description: error.message || "Google認証に失敗しました。プロバイダー設定を確認してください。",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -62,6 +63,8 @@ const Auth = () => {
           message = "このメールアドレスは既に登録されています";
         } else if (error.message.includes("Password should be at least")) {
           message = "パスワードは6文字以上である必要があります";
+        } else if (error.message.includes("Email not confirmed")) {
+          message = "メールアドレスの確認が必要です。送信されたメールを確認してください。";
         }
         
         toast({
@@ -76,6 +79,7 @@ const Auth = () => {
         });
       }
     } catch (error: any) {
+      console.error('認証エラー:', error);
       toast({
         title: "エラー",
         description: error.message || "認証に失敗しました",
