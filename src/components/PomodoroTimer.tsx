@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Coffee, Zap, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -165,18 +166,18 @@ const PomodoroTimer = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-start justify-center p-6 pt-8">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="min-h-screen flex flex-col items-center justify-start p-2 pt-6 sm:p-4 sm:pt-8">
+      <div className="w-full max-w-md sm:max-w-lg space-y-4 sm:space-y-6">
         {/* 今日の進捗 */}
         <TodayProgress />
 
         {/* メインタイマー */}
-        <Card className="p-8 bg-card/80 backdrop-blur-sm border-2 border-primary/20">
-          <div className="text-center space-y-8">
+        <Card className="p-5 sm:p-8 bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-md">
+          <div className="text-center space-y-5 sm:space-y-8">
             {/* Header */}
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-primary">ポモドーロタイマー</h1>
-              <p className="text-muted-foreground">
+            <div className="space-y-1.5 sm:space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-primary">ポモドーロタイマー</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 集中して作業し、適度に休憩を取りましょう
               </p>
               
@@ -199,7 +200,7 @@ const PomodoroTimer = () => {
               <Button
                 variant={mode === 'work' ? 'default' : 'ghost'}
                 onClick={() => switchMode('work')}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 text-xs sm:text-base py-2 sm:py-3"
               >
                 <Zap className="w-4 h-4" />
                 作業時間
@@ -207,7 +208,7 @@ const PomodoroTimer = () => {
               <Button
                 variant={mode === 'break' ? 'default' : 'ghost'}
                 onClick={() => switchMode('break')}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 text-xs sm:text-base py-2 sm:py-3"
               >
                 <Coffee className="w-4 h-4" />
                 休憩時間
@@ -216,31 +217,31 @@ const PomodoroTimer = () => {
 
             {/* Timer Display */}
             <div className={`relative ${isRunning ? 'timer-active' : ''}`}>
-              <div className="text-8xl font-bold text-primary timer-glow">
+              <div className="text-6xl sm:text-8xl font-bold text-primary timer-glow break-words">
                 {formatTime(timeLeft)}
               </div>
-              <div className="text-lg text-muted-foreground mt-2">
+              <div className="text-base sm:text-lg text-muted-foreground mt-2">
                 {mode === 'work' ? '作業中' : '休憩中'}
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Progress 
                 value={progress} 
-                className="h-3"
+                className="h-2 sm:h-3"
               />
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs sm:text-sm text-muted-foreground">
                 {Math.round(progress)}% 完了
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-3 sm:gap-4 justify-center flex-wrap">
               <Button
                 onClick={toggleTimer}
                 size="lg"
-                className="gap-2 px-8"
+                className="gap-2 px-7 sm:px-8 text-sm sm:text-base"
               >
                 {isRunning ? (
                   <>
@@ -258,7 +259,7 @@ const PomodoroTimer = () => {
                 onClick={resetTimer}
                 variant="outline"
                 size="lg"
-                className="gap-2"
+                className="gap-2 text-sm sm:text-base"
               >
                 <RotateCcw className="w-5 h-5" />
                 リセット
