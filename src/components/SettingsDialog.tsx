@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,11 @@ const SettingsDialog = () => {
   const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  // dailyTargetが変更されたときにtempTargetも更新
+  useEffect(() => {
+    setTempTarget(dailyTarget.toString());
+  }, [dailyTarget]);
 
   const handleSave = () => {
     const target = parseInt(tempTarget, 10);
