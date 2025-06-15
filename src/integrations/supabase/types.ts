@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_targets: {
+        Row: {
+          daily_target: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          daily_target?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          daily_target?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pomodoro_sessions: {
         Row: {
           completed_count: number

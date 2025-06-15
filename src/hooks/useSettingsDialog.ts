@@ -1,3 +1,4 @@
+
 import { useReducer, useCallback } from 'react';
 import { useSettings } from './useSettings';
 import { useToast } from './use-toast';
@@ -54,7 +55,7 @@ const settingsReducer = (state: SettingsState, action: SettingsAction): Settings
 };
 
 export const useSettingsDialog = () => {
-  const { dailyTarget, updateDailyTarget } = useSettings();
+  const { dailyTarget, updateDailyTarget, refetch } = useSettings();
   const { toast } = useToast();
   
   const [state, dispatch] = useReducer(settingsReducer, {
@@ -64,7 +65,7 @@ export const useSettingsDialog = () => {
     error: null,
   });
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!state.isValid) {
       toast({
         title: "エラー",
@@ -76,7 +77,8 @@ export const useSettingsDialog = () => {
 
     const target = parseInt(state.tempTarget, 10);
     try {
-      updateDailyTarget(target);
+      await updateDailyTarget(target);
+      await refetch();
       dispatch({ type: 'SET_OPEN', payload: false });
       toast({
         title: "設定を保存しました",
@@ -89,7 +91,7 @@ export const useSettingsDialog = () => {
         variant: "destructive",
       });
     }
-  }, [state.isValid, state.tempTarget, state.error, updateDailyTarget, toast]);
+  }, [state.isValid, state.tempTarget, state.error, updateDailyTarget, refetch, toast]);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (newOpen) {
