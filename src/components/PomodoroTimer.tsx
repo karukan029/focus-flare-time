@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { usePomodoroHistory } from '@/hooks/usePomodoroHistory';
+import TodayProgress from './TodayProgress';
+import PomodoroHistory from './PomodoroHistory';
 
 type TimerMode = 'work' | 'break';
 
@@ -16,12 +19,20 @@ const PomodoroTimer = () => {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { todaySession, updatePomodoroSession, refetchTodaySession } = usePomodoroHistory();
 
   const workDuration = 25 * 60; // 25 minutes
   const breakDuration = 5 * 60; // 5 minutes
   
   const currentDuration = mode === 'work' ? workDuration : breakDuration;
   const progress = ((currentDuration - timeLeft) / currentDuration) * 100;
+
+  // 今日のセッションから完了済みポモドーロ数を同期
+  useEffect(() => {
+    if (todaySession) {
+      setCompletedPomodoros(todaySession.completed_count);
+    }
+  }, [todaySession]);
 
   // 通知許可を確認・要求
   useEffect(() => {
@@ -67,10 +78,15 @@ const PomodoroTimer = () => {
     };
   }, [isRunning, timeLeft]);
 
-  const handleTimerComplete = () => {
+  const handleTimerComplete = async () => {
     setIsRunning(false);
     
     if (mode === 'work') {
+      // ポモドーロ完了時にDBを更新
+      await updatePomodoroSession();
+      // 今日のセッションを再取得
+      await refetchTodaySession();
+      
       setCompletedPomodoros(prev => prev + 1);
       setMode('break');
       setTimeLeft(breakDuration);
@@ -149,114 +165,111 @@ const PomodoroTimer = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg p-8 bg-card/80 backdrop-blur-sm border-2 border-primary/20">
-        <div className="text-center space-y-8">
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-primary">ポモドーロタイマー</h1>
-            <p className="text-muted-foreground">
-              集中して作業し、適度に休憩を取りましょう
-            </p>
-            
-            {/* 通知設定 */}
-            {!notificationsEnabled && 'Notification' in window && (
+    <div className="min-h-screen flex items-start justify-center p-6 pt-8">
+      <div className="w-full max-w-lg space-y-6">
+        {/* 今日の進捗 */}
+        <TodayProgress />
+
+        {/* メインタイマー */}
+        <Card className="p-8 bg-card/80 backdrop-blur-sm border-2 border-primary/20">
+          <div className="text-center space-y-8">
+            {/* Header */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-primary">ポモドーロタイマー</h1>
+              <p className="text-muted-foreground">
+                集中して作業し、適度に休憩を取りましょう
+              </p>
+              
+              {/* 通知設定 */}
+              {!notificationsEnabled && 'Notification' in window && (
+                <Button
+                  onClick={requestNotificationPermission}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Bell className="w-4 h-4" />
+                  通知を有効にする
+                </Button>
+              )}
+            </div>
+
+            {/* Mode Selector */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
               <Button
-                onClick={requestNotificationPermission}
+                variant={mode === 'work' ? 'default' : 'ghost'}
+                onClick={() => switchMode('work')}
+                className="flex-1 gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                作業時間
+              </Button>
+              <Button
+                variant={mode === 'break' ? 'default' : 'ghost'}
+                onClick={() => switchMode('break')}
+                className="flex-1 gap-2"
+              >
+                <Coffee className="w-4 h-4" />
+                休憩時間
+              </Button>
+            </div>
+
+            {/* Timer Display */}
+            <div className={`relative ${isRunning ? 'timer-active' : ''}`}>
+              <div className="text-8xl font-bold text-primary timer-glow">
+                {formatTime(timeLeft)}
+              </div>
+              <div className="text-lg text-muted-foreground mt-2">
+                {mode === 'work' ? '作業中' : '休憩中'}
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <Progress 
+                value={progress} 
+                className="h-3"
+              />
+              <div className="text-sm text-muted-foreground">
+                {Math.round(progress)}% 完了
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={toggleTimer}
+                size="lg"
+                className="gap-2 px-8"
+              >
+                {isRunning ? (
+                  <>
+                    <Pause className="w-5 h-5" />
+                    一時停止
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    開始
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={resetTimer}
                 variant="outline"
-                size="sm"
+                size="lg"
                 className="gap-2"
               >
-                <Bell className="w-4 h-4" />
-                通知を有効にする
+                <RotateCcw className="w-5 h-5" />
+                リセット
               </Button>
-            )}
-          </div>
-
-          {/* Mode Selector */}
-          <div className="flex gap-2 p-1 bg-muted rounded-lg">
-            <Button
-              variant={mode === 'work' ? 'default' : 'ghost'}
-              onClick={() => switchMode('work')}
-              className="flex-1 gap-2"
-            >
-              <Zap className="w-4 h-4" />
-              作業時間
-            </Button>
-            <Button
-              variant={mode === 'break' ? 'default' : 'ghost'}
-              onClick={() => switchMode('break')}
-              className="flex-1 gap-2"
-            >
-              <Coffee className="w-4 h-4" />
-              休憩時間
-            </Button>
-          </div>
-
-          {/* Timer Display */}
-          <div className={`relative ${isRunning ? 'timer-active' : ''}`}>
-            <div className="text-8xl font-bold text-primary timer-glow">
-              {formatTime(timeLeft)}
-            </div>
-            <div className="text-lg text-muted-foreground mt-2">
-              {mode === 'work' ? '作業中' : '休憩中'}
             </div>
           </div>
+        </Card>
 
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <Progress 
-              value={progress} 
-              className="h-3"
-            />
-            <div className="text-sm text-muted-foreground">
-              {Math.round(progress)}% 完了
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex gap-4 justify-center">
-            <Button
-              onClick={toggleTimer}
-              size="lg"
-              className="gap-2 px-8"
-            >
-              {isRunning ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  一時停止
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  開始
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={resetTimer}
-              variant="outline"
-              size="lg"
-              className="gap-2"
-            >
-              <RotateCcw className="w-5 h-5" />
-              リセット
-            </Button>
-          </div>
-
-          {/* Stats */}
-          <div className="pt-6 border-t border-border">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">
-                {completedPomodoros}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                完了したポモドーロ
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+        {/* 履歴セクション */}
+        <PomodoroHistory />
+      </div>
     </div>
   );
 };
