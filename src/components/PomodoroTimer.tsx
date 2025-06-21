@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Coffee, Zap, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -51,11 +50,17 @@ const PomodoroTimer = () => {
   // デスクトップ通知を表示する関数
   const showNotification = (title: string, body: string) => {
     if (notificationsEnabled && 'Notification' in window) {
-      new Notification(title, {
+      const notification = new Notification(title, {
         body,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
       });
+      
+      // 通知をクリックしたときにアプリケーションにフォーカスを当てる
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
     }
   };
 
